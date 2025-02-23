@@ -15,14 +15,22 @@ import world.gregs.voidps.engine.entity.playerSpawn
 import world.gregs.voidps.engine.inv.*
 import world.gregs.voidps.engine.inv.transact.TransactionError
 import world.gregs.voidps.network.login.protocol.visual.update.player.EquipSlot
-import content.entity.sound.playSound
+import content.entity.sound.sound
 import content.entity.player.inv.inventoryOption
 import content.entity.player.inv.inventoryOptions
+import world.gregs.voidps.engine.client.message
+import world.gregs.voidps.engine.data.definition.AreaDefinitions
+import world.gregs.voidps.engine.inject
+
+val areas: AreaDefinitions by inject()
 
 inventoryOptions("Wield", "Wear", "Hold", "Equip", inventory = "inventory") {
     val def = item.def
-
     if (!player.hasRequirements(item, true)) {
+        return@inventoryOptions
+    }
+    if (item.id.contains("greegree") && player.tile !in areas["ape_atoll"] && player.tile !in areas["ape_atoll_agility_dungeon"]) {
+        player.message("You attempt to use the Monkey Greegree but nothing happens.")
         return@inventoryOptions
     }
     if (replaceWeaponShieldWith2h(player, def) && !player.equipment.move(EquipSlot.Shield.index, player.inventory)) {
@@ -77,8 +85,8 @@ fun getOtherHandSlot(slot: EquipSlot) = if (slot == EquipSlot.Shield) EquipSlot.
 
 fun updateWeaponEmote(player: Player) {
     val weapon = player.equipped(EquipSlot.Weapon)
-    val anim = weapon.def["render_animation", 1426]
-    player.appearance.emote = anim
+    val emote = weapon.def["render_emote", 1426]
+    player.appearance.emote = emote
     player.flagAppearance()
 }
 
@@ -129,6 +137,6 @@ fun playEquipSound(player: Player, item: ItemDefinition) {
     if (material == "wood") {
         sound = "equip_wood"
     }
-    player.playSound(sound)
+    player.sound(sound)
     player.queue.clearWeak()
 }
